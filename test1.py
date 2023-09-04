@@ -8,15 +8,20 @@ Created on Mon Sep  4 20:03:43 2023
 import cv2
 import numpy as np
 
+path_weights = "C:/Users/usuario/Desktop/DL_project_1/weights/yolov3.weights"
+path_cfg = "C:/Users/usuario/Desktop/DL_project_1/cfg/yolov3.cfg"
+path_names = "C:/Users/usuario/Desktop/DL_project_1/data/coco.names"
+path_image = "C:/Users/usuario/Desktop/DL_project_1/images/cat.jpg"
+
 # Carregue a rede YOLO com os pesos pré-treinados e configuração
-net = cv2.dnn.readNet('yolov3.weights', 'yolov3.cfg')
+net = cv2.dnn.readNet(path_weights, path_cfg)
 
 # Carregue as classes de objetos
-with open('coco.names', 'r') as f:
+with open(path_names, 'r') as f:
     classes = f.read().strip().split('\n')
 
 # Carregue a imagem
-image = cv2.imread('image.jpg')
+image = cv2.imread(path_image)
 
 # Obtenha as dimensões da imagem
 height, width = image.shape[:2]
@@ -35,27 +40,34 @@ boxes = []
 confidences = []
 class_ids = []
 
-# Loop pelas saídas
+# Loop through the outputs
 for out in outs:
     for detection in out:
+        # Get confidence scores for each class
         scores = detection[5:]
+        # Identify the class with the highest confidence score
         class_id = np.argmax(scores)
+        # Get the confidence associated with the identified class
+
         confidence = scores[class_id]
 
-        if confidence > 0.5:  # Filtro de confiança
-            # Escala de volta as coordenadas da caixa delimitadora
+        # Check if confidence is greater than 0.5 (a confidence filter)
+        if confidence > 0.5:
+            # Scale back the bounding box coordinates
             center_x = int(detection[0] * width)
             center_y = int(detection[1] * height)
             w = int(detection[2] * width)
             h = int(detection[3] * height)
 
-            # Coordenadas da caixa delimitadora
+            # Calculate the coordinates of the bounding box
             x = int(center_x - w / 2)
             y = int(center_y - h / 2)
 
+            # Store bounding box information, confidence, and class
             boxes.append([x, y, w, h])
             confidences.append(float(confidence))
             class_ids.append(class_id)
+
 
 # Aplicar supressão não máxima para eliminar detecções sobrepostas
 indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
