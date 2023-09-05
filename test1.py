@@ -11,7 +11,7 @@ import numpy as np
 path_weights = "C:/Users/usuario/Desktop/DL_project_1/weights/yolov3.weights"
 path_cfg = "C:/Users/usuario/Desktop/DL_project_1/cfg/yolov3.cfg"
 path_names = "C:/Users/usuario/Desktop/DL_project_1/data/coco.names"
-path_image = "C:/Users/usuario/Desktop/DL_project_1/images/cat.jpg"
+path_image = "C:/Users/usuario/Desktop/DL_project_1/images/food.jpg"
 
 # Carregue a rede YOLO com os pesos pré-treinados e configuração
 net = cv2.dnn.readNet(path_weights, path_cfg)
