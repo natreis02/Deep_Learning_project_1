@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep  4 20:03:43 2023
+Created on Tue Sep  5 16:52:43 2023
 
-@author: usuario
+@author: Natália França dos Reis and Vitor Hugo Miranda Mourão
 """
 
 import cv2
@@ -74,7 +74,6 @@ indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
 # Desenhe as caixas delimitadoras e rótulos nas detecções restantes
 for i in indices:
-    i = i[0]
     box = boxes[i]
     x, y, w, h = box
     label = str(classes[class_ids[i]])
