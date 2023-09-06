@@ -5,37 +5,48 @@ Created on Tue Sep  5 16:52:43 2023
 @author: Natália França dos Reis and Vitor Hugo Miranda Mourão
 """
 
-import cv2
+# Import necessary libraries
+import cv2 # OpenCV library for computer vision tasks
 import numpy as np
+import os
+import matplotlib.pyplot as plt
 
-path_weights = "C:/Users/usuario/Desktop/DL_project_1/weights/yolov3.weights"
-path_cfg = "C:/Users/usuario/Desktop/DL_project_1/cfg/yolov3.cfg"
-path_names = "C:/Users/usuario/Desktop/DL_project_1/data/coco.names"
-path_image = "C:/Users/usuario/Desktop/DL_project_1/images/food.jpg"
+# Define file paths
+nat_names = "C:/Users/usuario/Desktop/DL_project_1/"
+vit_names = "C:/Users/vitor/Downloads/Pos grad/Doutorado/MT862 - Deep Learning/projeto 1/"
 
-# Carregue a rede YOLO com os pesos pré-treinados e configuração
+path_weights = os.path.join(vit_names, "weights/yolov3.weights")
+path_cfg = os.path.join(vit_names, "cfg/yolov3.cfg")
+path_names = os.path.join(vit_names, "data/coco.names")
+path_image = os.path.join(vit_names, "images/surf.jpg")
+
+# Load the YOLO network with pre-trained weights and configuration
 net = cv2.dnn.readNet(path_weights, path_cfg)
 
-# Carregue as classes de objetos
+# Load the object classes
 with open(path_names, 'r') as f:
     classes = f.read().strip().split('\n')
+    
+np.random.seed(99)
+# Define a list of unique colors for each class
+class_colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
-# Carregue a imagem
+# Load the image
 image = cv2.imread(path_image)
 
-# Obtenha as dimensões da imagem
+# Get the dimensions of the image
 height, width = image.shape[:2]
 
-# Crie um blob a partir da imagem
+# Create a blob from the image
 blob = cv2.dnn.blobFromImage(image, 1 / 255.0, (416, 416), swapRB=True, crop=False)
 
-# Defina as entradas da rede
+# Set the input for the network
 net.setInput(blob)
 
-# Obtenha as saídas da rede (detecções)
+# Get the network outputs (detections)
 outs = net.forward(net.getUnconnectedOutLayersNames())
 
-# Inicialize listas para caixas delimitadoras, confiança e IDs de classe
+# Initialize lists for bounding boxes, confidences, and class IDs
 boxes = []
 confidences = []
 class_ids = []
@@ -48,7 +59,6 @@ for out in outs:
         # Identify the class with the highest confidence score
         class_id = np.argmax(scores)
         # Get the confidence associated with the identified class
-
         confidence = scores[class_id]
 
         # Check if confidence is greater than 0.5 (a confidence filter)
@@ -69,24 +79,31 @@ for out in outs:
             class_ids.append(class_id)
 
 
-# Aplicar supressão não máxima para eliminar detecções sobrepostas
+# Apply non-maximum suppression to eliminate overlapping detections
 indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
-# Desenhe as caixas delimitadoras e rótulos nas detecções restantes
+# Draw bounding boxes and labels on the remaining detections
 for i in indices:
     box = boxes[i]
     x, y, w, h = box
     label = str(classes[class_ids[i]])
     confidence = confidences[i]
 
-    # Desenhe a caixa delimitadora
-    color = (0, 255, 0)  # Cor verde
+    # Draw the bounding box
+    #color = (0, 255, 0)  # Green color
+    color = class_colors[class_ids[i]]
     cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
 
-    # Escreva o rótulo e a confiança
-    cv2.putText(image, f"{label} {confidence:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    # Write the label and confidence
+    cv2.putText(image,f"{label} {confidence:.2f}", (x, y - 10), cv2.FONT_HERSHEY_TRIPLEX, 0.75, color,1)
+    
+# Display the image with detections (CONFLICT WITH WINDOW PLT PLOT)
+#cv2.imshow("Detecções YOLO", image)
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
-# Exiba a imagem com as detecções
-cv2.imshow("Detecções YOLO", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# Display the image with detections using matplotlib
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+plt.title("YOLO Detections")
+plt.axis('off')  # Turn off axis labels and ticks
+plt.show()
