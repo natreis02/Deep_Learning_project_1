@@ -18,7 +18,7 @@ vit_names = "C:/Users/vitor/Downloads/Pos grad/Doutorado/MT862 - Deep Learning/p
 path_weights = os.path.join(vit_names, "weights/yolov3.weights")
 path_cfg = os.path.join(vit_names, "cfg/yolov3.cfg")
 path_names = os.path.join(vit_names, "data/coco.names")
-path_image = os.path.join(vit_names, "images/surf.jpg")
+path_image = os.path.join(vit_names, "images/food.jpg")
 
 # Load the YOLO network with pre-trained weights and configuration
 net = cv2.dnn.readNet(path_weights, path_cfg)
@@ -80,7 +80,7 @@ for out in outs:
 
 
 # Apply non-maximum suppression to eliminate overlapping detections
-indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 1-0.5)
 
 # Draw bounding boxes and labels on the remaining detections
 for i in indices:
@@ -90,20 +90,14 @@ for i in indices:
     confidence = confidences[i]
 
     # Draw the bounding box
-    #color = (0, 255, 0)  # Green color
     color = class_colors[class_ids[i]]
     cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
 
     # Write the label and confidence
     cv2.putText(image,f"{label} {confidence:.2f}", (x, y - 10), cv2.FONT_HERSHEY_TRIPLEX, 0.75, color,1)
     
-# Display the image with detections (CONFLICT WITH WINDOW PLT PLOT)
-#cv2.imshow("Detecções YOLO", image)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-
 # Display the image with detections using matplotlib
 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-plt.title("YOLO Detections")
+#plt.title("YOLO Detections")
 plt.axis('off')  # Turn off axis labels and ticks
 plt.show()
