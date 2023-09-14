@@ -18,7 +18,7 @@ vit_names = "C:/Users/vitor/Downloads/Pos grad/Doutorado/MT862 - Deep Learning/p
 path_weights = os.path.join(vit_names, "weights/yolov3.weights")
 path_cfg = os.path.join(vit_names, "cfg/yolov3.cfg")
 path_names = os.path.join(vit_names, "data/coco.names")
-path_image = os.path.join(vit_names, "images/food.jpg")
+path_image = os.path.join(vit_names, "images/pessoas.jpg")
 
 # Load the YOLO network with pre-trained weights and configuration
 net = cv2.dnn.readNet(path_weights, path_cfg)
@@ -82,11 +82,17 @@ for out in outs:
 # Apply non-maximum suppression to eliminate overlapping detections
 indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 1-0.5)
 
+# Initialize a count variable to keep track of persons
+person_count = 0
+
 # Draw bounding boxes and labels on the remaining detections
 for i in indices:
     box = boxes[i]
     x, y, w, h = box
     label = str(classes[class_ids[i]])
+    # Check if the detected object is a person
+    if label == 'person':
+        person_count += 1
     confidence = confidences[i]
 
     # Draw the bounding box
@@ -101,3 +107,6 @@ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 #plt.title("YOLO Detections")
 plt.axis('off')  # Turn off axis labels and ticks
 plt.show()
+
+# Print the total number of persons detected
+print(f"Total number of persons: {person_count}")
