@@ -81,32 +81,39 @@ def softmax(x, axis=1):
         return e / s
     else:
         raise ValueError('Cannot apply softmax to a tensor that is 1D')
+        
+# Define the file paths
+base_path_n = "C:/Users/usuario/Desktop/DL_project/"
+base_path_v = "C:/Users/vitor/Downloads/Pos grad/Doutorado/MT862 - Deep Learning/projeto 2/files/"
+file_paths_n = {
+    'dataset':  base_path_n + "dataset.pkl",
+    'human_vocab': base_path_n + "human_vocab.pkl",
+    'machine_vocab': base_path_n + "machine_vocab.pkl",
+    'inv_machine_vocab': base_path_n + "inv_machine_vocab.pkl"
+}
+file_paths_v = {
+    'dataset': base_path_v + "dataset.pkl",
+    'human_vocab': base_path_v + "human_vocab.pkl",
+    'machine_vocab': base_path_v + "machine_vocab.pkl",
+    'inv_machine_vocab': base_path_v + "inv_machine_vocab.pkl"
+}
 
-# Replace 'yourfile.pkl' with the path to your .pkl file
-with open("C:/Users/usuario/Desktop/DL_project/dataset.pkl", 'rb') as file:
-    dataset = pickle.load(file)
+# Load the data from the files in a single line using dictionary comprehension
+data = {name: pickle.load(open(path, 'rb')) for name, path in file_paths_v.items()}
 
-# Replace 'yourfile.pkl' with the path to your .pkl file
-with open("C:/Users/usuario/Desktop/DL_project/human_vocab.pkl", 'rb') as file:
-    human_vocab = pickle.load(file)
-    
-# Replace 'yourfile.pkl' with the path to your .pkl file
-with open("C:/Users/usuario/Desktop/DL_project/machine_vocab.pkl", 'rb') as file:
-    machine_vocab = pickle.load(file)
-    
-# Replace 'yourfile.pkl' with the path to your .pkl file
-with open("C:/Users/usuario/Desktop/DL_project/inv_machine_vocab.pkl", 'rb') as file:
-    inv_machine_vocab = pickle.load(file)
+dataset = data['dataset']
+human_vocab = data['human_vocab']
+machine_vocab = data['machine_vocab']
+inv_machine_vocab = data['inv_machine_vocab']
         
 Tx = 30
 Ty = 10
 
-tf.config.list_physical_devices()
+tf.config.list_physical_devices(device_type='GPU')
 
 X, Y, Xoh, Yoh = preprocess_data(dataset,human_vocab,machine_vocab, Tx, Ty)
 
 ##### Attention #####
-
 repeator = RepeatVector(Tx)
 concatenator = Concatenate(axis = -1)
 densor1 = Dense(10, activation = "tanh")
