@@ -5,11 +5,11 @@ Created on Sat Nov 18 13:00:52 2023
 @author: Natalia França dos Reis & Vitor Hugo Miranda Mourao
 """
 
-from tensorflow.keras.layers import Bidirectional, Concatenate, Permute, Dot, Input, LSTM
-from tensorflow.keras.layers import RepeatVector, Dense, Activation, Lambda
+from tensorflow.keras.layers import Bidirectional, Concatenate, Dot, Input, LSTM
+from tensorflow.keras.layers import RepeatVector, Dense, Activation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import load_model, Model
+from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
@@ -47,7 +47,6 @@ def string_to_int(string, length, vocab):
     if len(string) < length:
         rep += [vocab['<pad>']] * (length - len(string))
 
-    #print (rep)
     return rep
 
 def preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty):
@@ -81,6 +80,40 @@ def softmax(x, axis=1):
         return e / s
     else:
         raise ValueError('Cannot apply softmax to a tensor that is 1D')
+        
+def test_examples(examples, human_vocab, Tx, model, inv_machine_vocab):
+    """
+    Test the examples using the model to predict the output sequence.
+
+    Arguments:
+    examples -- list of human-readable dates.
+    human_vocab -- dictionary of human vocab (string -> index).
+    Tx -- sequence length expected by the model.
+    model -- trained Keras model.
+    inv_machine_vocab -- dictionary of machine vocab (index -> string).
+
+    Returns:
+    None
+    """
+
+    # Preprocess the examples
+    X = np.array([string_to_int(date, Tx, human_vocab) for date in examples])
+    Xoh = np.array(list(map(lambda x: to_categorical(x, num_classes=len(human_vocab)), X)))
+
+    # Make predictions
+    predictions = model.predict([Xoh, s0[:Xoh.shape[0]], c0[:Xoh.shape[0]]])
+
+    # Convert predictions to readable format
+    for i, prediction in enumerate(predictions):
+        # Take the index with maximum probability from the softmax output
+        prediction = np.argmax(prediction, axis=-1)
+        output = [inv_machine_vocab[int(i)] for i in prediction]
+
+        # Join the predicted tokens as a single string
+        output_date = ''.join(output)
+
+        print(f"Input date: {examples[i]}")
+        print(f"Predicted output: {output_date}")
         
 # Define the file paths
 base_path_n = "C:/Users/usuario/Desktop/DL_project/"
@@ -156,7 +189,7 @@ def modelf(Tx, Ty, n_a, n_s, human_vocab_size, machine_vocab_size):
     return model
         
 model = modelf(Tx, Ty, n_a, n_s, len(human_vocab), len(machine_vocab))
-model.summary()
+# model.summary()
 
 opt = Adam(learning_rate = 0.005, beta_1 = 0.9, beta_2 = 0.999, weight_decay = 0.01)
 model.compile(optimizer = opt, loss = "categorical_crossentropy", metrics = ["accuracy"])
@@ -165,4 +198,115 @@ s0 = np.zeros((len(X), n_s))
 c0 = np.zeros((len(X), n_s))
 
 outputs = list(Yoh.swapaxes(0,1))
-model.fit([Xoh, s0, c0], outputs, epochs = 50, batch_size = 100)
+model.fit([Xoh, s0, c0], outputs, epochs = 25, batch_size = 100)
+
+##### Model Prediction ######
+
+fake = Faker()
+Faker.seed(1992)
+random.seed(1996)
+
+# Define format of the data we would like to generate
+FORMATS = ['short',
+           'medium',
+           'long',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'full',
+           'd MMM YYY', 
+           'd MMMM YYY',
+           'dd MMM YYY',
+           'd MMM, YYY',
+           'd MMMM, YYY',
+           'dd, MMM YYY',
+           'd MM YY',
+           'd MMMM YYY',
+           'MMMM d YYY',
+           'MMMM d, YYY',
+           'dd.MM.YY']
+
+# change this if you want it to work with another language
+LOCALES = ['en_US']
+
+def load_date():
+    """
+        Loads some fake dates 
+        :returns: tuple containing human readable string, machine readable string, and date object
+    """
+    dt = fake.date_object()
+
+    try:
+        human_readable = format_date(dt, format=random.choice(FORMATS),  locale='en_US') # locale=random.choice(LOCALES))
+        human_readable = human_readable.lower()
+        human_readable = human_readable.replace(',','')
+        machine_readable = dt.isoformat()
+
+    except AttributeError as e:
+        return None, None, None
+
+    return human_readable, machine_readable, dt
+
+def load_dataset(m):
+    """
+        Loads a dataset with m examples and vocabularies
+        :m: the number of examples to generate
+    """
+
+    human_vocab = set()
+    machine_vocab = set()
+    dataset = []
+
+
+    for i in tqdm(range(m)):
+        h, m, _ = load_date()
+        if h is not None:
+            dataset.append((h, m))
+            human_vocab.update(tuple(h))
+            machine_vocab.update(tuple(m))
+
+    return dataset
+
+m = 1000
+dataset_test = load_dataset(m)
+
+EXAMPLES = [example[0] for example in dataset_test]
+TARGETS = [example[1] for example in dataset_test] 
+s00 = np.zeros((1, n_s))
+c00 = np.zeros((1, n_s))
+
+correct_predictions = 0
+
+for i, example in enumerate(EXAMPLES):
+    print(i,"\n")
+    # Convert the raw date string into a one-hot encoded version
+    source = string_to_int(example, Tx, human_vocab)
+    source = np.array(list(map(lambda x: to_categorical(x, num_classes=len(human_vocab)), source)))
+    source = np.expand_dims(source, axis=0)
+
+    # Predict the output using the model
+    prediction = model.predict([source, s00, c00])
+    prediction = np.argmax(prediction, axis=-1)
+
+    # Iterate over the Ty dimension to get predictions
+    output = [inv_machine_vocab[int(i)] for i in prediction]
+    predicted_date = ''.join(output)
+    
+    # Compare the predicted date to the actual date
+    actual_date = TARGETS[i]
+    if predicted_date == actual_date:
+        correct_predictions += 1
+    else:
+        print("source:", example)
+        print("output:", predicted_date)
+        print("actual:", actual_date, "\n")
+
+# Calculate the accuracy
+accuracy = correct_predictions / len(EXAMPLES)
+print("Accuracy:", accuracy)
