@@ -10,11 +10,11 @@ from tensorflow.keras.layers import RepeatVector, Dense, Activation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Model
+from tensorflow.keras.activations import softmax
 import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
 import pickle
-import seaborn as sns
 
 from faker import Faker
 import random
@@ -62,59 +62,25 @@ def preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty):
 
     return X, np.array(Y), Xoh, Yoh
 
-def softmax(x, axis=1):
-    """Softmax activation function.
-    # Arguments
-        x : Tensor.
-        axis: Integer, axis along which the softmax normalization is applied.
-    # Returns
-        Tensor, output of softmax transformation.
-    # Raises
-        ValueError: In case `dim(x) == 1`.
-    """
-    ndim = K.ndim(x)
-    if ndim == 2:
-        return K.softmax(x)
-    elif ndim > 2:
-        e = K.exp(x - K.max(x, axis=axis, keepdims=True))
-        s = K.sum(e, axis=axis, keepdims=True)
-        return e / s
-    else:
-        raise ValueError('Cannot apply softmax to a tensor that is 1D')
-        
-def test_examples(examples, human_vocab, Tx, model, inv_machine_vocab):
-    """
-    Test the examples using the model to predict the output sequence.
-
-    Arguments:
-    examples -- list of human-readable dates.
-    human_vocab -- dictionary of human vocab (string -> index).
-    Tx -- sequence length expected by the model.
-    model -- trained Keras model.
-    inv_machine_vocab -- dictionary of machine vocab (index -> string).
-
-    Returns:
-    None
-    """
-
-    # Preprocess the examples
-    X = np.array([string_to_int(date, Tx, human_vocab) for date in examples])
-    Xoh = np.array(list(map(lambda x: to_categorical(x, num_classes=len(human_vocab)), X)))
-
-    # Make predictions
-    predictions = model.predict([Xoh, s0[:Xoh.shape[0]], c0[:Xoh.shape[0]]])
-
-    # Convert predictions to readable format
-    for i, prediction in enumerate(predictions):
-        # Take the index with maximum probability from the softmax output
-        prediction = np.argmax(prediction, axis=-1)
-        output = [inv_machine_vocab[int(i)] for i in prediction]
-
-        # Join the predicted tokens as a single string
-        output_date = ''.join(output)
-
-        print(f"Input date: {examples[i]}")
-        print(f"Predicted output: {output_date}")
+# def softmax(x, axis=1):
+#     """Softmax activation function.
+#     # Arguments
+#         x : Tensor.
+#         axis: Integer, axis along which the softmax normalization is applied.
+#     # Returns
+#         Tensor, output of softmax transformation.
+#     # Raises
+#         ValueError: In case `dim(x) == 1`.
+#     """
+#     ndim = K.ndim(x)
+#     if ndim == 2:
+#         return K.softmax(x)
+#     elif ndim > 2:
+#         e = K.exp(x - K.max(x, axis=axis, keepdims=True))
+#         s = K.sum(e, axis=axis, keepdims=True)
+#         return e / s
+#     else:
+#         raise ValueError('Cannot apply softmax to a tensor that is 1D')
         
 # Define the file paths
 base_path_n = "C:/Users/usuario/Desktop/DL_project/"
@@ -152,7 +118,7 @@ repeator = RepeatVector(Tx)
 concatenator = Concatenate(axis = -1)
 densor1 = Dense(10, activation = "tanh")
 densor2 = Dense(1, activation = "relu")
-activator = Activation(softmax, name = "attention_weights")
+activator = Activation('softmax', name = "attention_weights")
 dotor = Dot(axes = 1)
 
 def one_step_attention(a, s_prev):
