@@ -61,26 +61,6 @@ def preprocess_data(dataset, human_vocab, machine_vocab, Tx, Ty):
     Yoh = np.array(list(map(lambda x: to_categorical(x, num_classes=len(machine_vocab)), Y)))
 
     return X, np.array(Y), Xoh, Yoh
-
-# def softmax(x, axis=1):
-#     """Softmax activation function.
-#     # Arguments
-#         x : Tensor.
-#         axis: Integer, axis along which the softmax normalization is applied.
-#     # Returns
-#         Tensor, output of softmax transformation.
-#     # Raises
-#         ValueError: In case `dim(x) == 1`.
-#     """
-#     ndim = K.ndim(x)
-#     if ndim == 2:
-#         return K.softmax(x)
-#     elif ndim > 2:
-#         e = K.exp(x - K.max(x, axis=axis, keepdims=True))
-#         s = K.sum(e, axis=axis, keepdims=True)
-#         return e / s
-#     else:
-#         raise ValueError('Cannot apply softmax to a tensor that is 1D')
         
 # Define the file paths
 base_path_n = "C:/Users/usuario/Desktop/DL_project/"
